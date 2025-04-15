@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Setup{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="bg-light py-2">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{{ url_for('courses.index') }}" class="text-decoration-none text-danger">Courses</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('courses.view', course_id=course.id) }}" class="text-decoration-none text-danger">{{ course.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('chapters.view', chapter_id=chapter.id) }}" class="text-decoration-none text-danger">{{ chapter.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('chapters.view_document', document_id=document.id) }}" class="text-decoration-none text-danger">{{ document.title }}</a></li>
+            <li class="breadcrumb-item active">Quiz Setup</li>
+        </ol>
+    </div>
+</nav>
+{% endblock %}
+
+{% block heading %}Set Up Quiz for "{{ document.title }}"{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-question-circle fa-lg text-danger me-2"></i>
+                    <span>Quiz Configuration</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-light mb-4">
+                    <h5><i class="fas fa-lightbulb me-2 text-warning"></i>How it works</h5>
+                    <p>Our AI will generate quiz questions based on the content of "{{ document.title }}". You'll be presented with questions one at a time and can type your answers.</p>
+                    <p class="mb-0">After completing the quiz, you'll receive personalized feedback on your performance and recommendations for improvement.</p>
+                </div>
+                
+                <form method="POST" action="{{ url_for('quiz.setup', document_id=document.id) }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">{{ form.difficulty.label }}</label>
+                        <div class="row g-3">
+                            {% for subfield in form.difficulty %}
+                            <div class="col-md-4">
+                                <div class="form-check difficulty-option">
+                                    <input class="form-check-input" type="radio" name="{{ form.difficulty.name }}" 
+                                           id="{{ subfield.id }}" value="{{ subfield.data }}" 
+                                           {% if loop.index == 2 %}checked{% endif %}>
+                                    <label class="form-check-label w-100 p-3 rounded" for="{{ subfield.id }}">
+                                        <div class="text-center">
+                                            {% if subfield.data == 'easy' %}
+                                            <i class="fas fa-smile fa-2x mb-2 text-success"></i>
+                                            <h5 class="mb-0">Easy</h5>
+                                            <small class="text-muted">Basic recall questions</small>
+                                            {% elif subfield.data == 'medium' %}
+                                            <i class="fas fa-meh fa-2x mb-2 text-primary"></i>
+                                            <h5 class="mb-0">Medium</h5>
+                                            <small class="text-muted">Application & analysis</small>
+                                            {% else %}
+                                            <i class="fas fa-grimace fa-2x mb-2 text-danger"></i>
+                                            <h5 class="mb-0">Hard</h5>
+                                            <small class="text-muted">Critical thinking</small>
+                                            {% endif %}
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% for error in form.difficulty.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        {{ form.num_questions.label(class="form-label fw-bold") }}
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <input type="range" class="form-range" min="3" max="20" step="1" 
+                                       id="questionRange" value="{{ form.num_questions.data or 5 }}">
+                            </div>
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    {{ form.num_questions(class="form-control text-center", id="numQuestionsInput") }}
+                                    <span class="input-group-text">questions</span>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">Choose between 3 and 20 questions.</small>
+                        {% for error in form.num_questions.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('chapters.view_document', document_id=document.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Document
+                        </a>
+                        
+                        <a href="{{ url_for('quiz.history', document_id=document.id) }}" class="btn btn-outline-danger">
+                            <i class="fas fa-history me-2"></i>View Quiz History
+                        </a>
+                        
+                        {{ form.submit(class="btn btn-danger") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .difficulty-option .form-check-label {
+        cursor: pointer;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .difficulty-option .form-check-label:hover {
+        background-color: #e9ecef;
+    }
+    
+    .difficulty-option .form-check-input {
+        position: absolute;
+        opacity: 0;
+    }
+    
+    .difficulty-option .form-check-input:checked + .form-check-label {
+        background-color: #f8d7da;
+        border-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const rangeInput = document.getElementById('questionRange');
+        const numberInput = document.getElementById('numQuestionsInput');
+        
+        // Sync the range slider with the number input
+        rangeInput.addEventListener('input', function() {
+            numberInput.value = this.value;
+        });
+        
+        numberInput.addEventListener('input', function() {
+            let value = parseInt(this.value);
+            if (isNaN(value)) {
+                value = 5;
+            } else if (value < 3) {
+                value = 3;
+            } else if (value > 20) {
+                value = 20;
+            }
+            
+            this.value = value;
+            rangeInput.value = value;
+        });
+    });
+</script>
+{% endblock %}

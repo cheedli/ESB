@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz - {{ document.title }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="bg-light py-2">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{{ url_for('courses.index') }}" class="text-decoration-none text-danger">Courses</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('courses.view', course_id=course.id) }}" class="text-decoration-none text-danger">{{ course.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('chapters.view', chapter_id=chapter.id) }}" class="text-decoration-none text-danger">{{ chapter.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('chapters.view_document', document_id=document.id) }}" class="text-decoration-none text-danger">{{ document.title }}</a></li>
+            <li class="breadcrumb-item active">Quiz</li>
+        </ol>
+    </div>
+</nav>
+{% endblock %}
+
+{% block heading %}Quiz: {{ document.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-question-circle text-danger me-2"></i>
+                        <span>Question {{ question_index + 1 }} of {{ total_questions }}</span>
+                    </div>
+                    <div>
+                        <span class="badge bg-danger">{{ quiz.difficulty|capitalize }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-4">
+                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ progress }}%;" 
+                         aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                        {{ question_index + 1 }}/{{ total_questions }}
+                    </div>
+                </div>
+                
+                <div class="question-container mb-4">
+                    <h5 class="mb-3">{{ question.question_text }}</h5>
+                </div>
+                
+                <form method="POST" action="{{ url_for('quiz.take', quiz_id=quiz.id, question_index=question_index) }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-4">
+                        {{ form.answer.label(class="form-label fw-bold") }}
+                        {{ form.answer(class="form-control", rows=5, placeholder="Type your answer here...") }}
+                        {% for error in form.answer.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted">Question {{ question_index + 1 }} of {{ total_questions }}</span>
+                        </div>
+                        <div>
+                            {{ form.submit(class="btn btn-danger") }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <div class="alert alert-light" role="alert">
+                <i class="fas fa-info-circle me-2 text-danger"></i>
+                <span>Answer each question to the best of your ability. You'll get feedback at the end of the quiz.</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .question-container {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid #dc3545;
+    }
+</style>
+{% endblock %}

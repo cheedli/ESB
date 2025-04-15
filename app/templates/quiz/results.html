@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Results{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb" class="bg-light py-2">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{{ url_for('courses.index') }}" class="text-decoration-none text-danger">Courses</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('courses.view', course_id=course.id) }}" class="text-decoration-none text-danger">{{ course.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('chapters.view', chapter_id=chapter.id) }}" class="text-decoration-none text-danger">{{ chapter.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('chapters.view_document', document_id=document.id) }}" class="text-decoration-none text-danger">{{ document.title }}</a></li>
+            <li class="breadcrumb-item active">Quiz Results</li>
+        </ol>
+    </div>
+</nav>
+{% endblock %}
+
+{% block heading %}Quiz Results{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-chart-bar me-2"></i>
+                        <span>Your Results</span>
+                    </div>
+                    <div>
+                        <span class="badge bg-light text-danger">{{ quiz.difficulty|capitalize }} Level</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="score-circle mx-auto mb-2 d-flex align-items-center justify-content-center 
+                                {% if quiz.score >= 80 %}success{% elif quiz.score >= 60 %}warning{% else %}danger{% endif %}">
+                                <span>{{ "%.1f"|format(quiz.score) }}%</span>
+                            </div>
+                            <h5>
+                                {% if quiz.score >= 80 %}
+                                <span class="text-success">Excellent!</span>
+                                {% elif quiz.score >= 60 %}
+                                <span class="text-warning">Good Job!</span>
+                                {% else %}
+                                <span class="text-danger">Needs Improvement</span>
+                                {% endif %}
+                            </h5>
+                            <p class="text-muted">
+                                Completed on {{ quiz.completed_at.strftime('%b %d, %Y at %H:%M') }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0"><i class="fas fa-lightbulb me-2 text-warning"></i>Personalized Feedback</h5>
+                            <button class="btn btn-sm btn-outline-secondary" id="toggleFeedback">
+                                <i class="fas fa-chevron-down" id="feedbackIcon"></i>
+                            </button>
+                        </div>
+                        <div class="feedback-container p-3 rounded" id="feedbackContainer">
+                            {% autoescape false %}
+                                {{ quiz.feedback|md_to_html|safe }}
+                            {% endautoescape %}
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <h5 class="mb-3"><i class="fas fa-list-ol me-2 text-danger"></i>Question Review</h5>
+                
+                <div class="accordion" id="questionAccordion">
+                    {% for question in questions %}
+                 
+                    <div class="accordion-item mb-2">
+                        <h2 class="accordion-header" id="heading{{ question.id }}">
+                            <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#collapse{{ question.id }}" 
+                                aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="collapse{{ question.id }}">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div>
+                                        <span class="me-2">Question {{ loop.index }}:</span>
+                                        <span class="question-text">{{ question.question_text|truncate(50) }}</span>
+                                    </div>
+                                    <span class="badge rounded-pill ms-auto me-3 
+                                        {% if question.is_correct %}bg-success{% else %}bg-danger{% endif %}">
+                                        {% if question.is_correct %}Correct{% else %}Incorrect{% endif %}
+                                    </span>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapse{{ question.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" 
+                            aria-labelledby="heading{{ question.id }}" data-bs-parent="#questionAccordion">
+                            <div class="accordion-body">
+                                <div class="mb-3">
+                                    <h6 class="fw-bold">Question:</h6>
+                                    <p>{{ question.question_text }}</p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="fw-bold">Your Answer:</h6>
+                                    <div class="p-3 rounded {% if question.is_correct %}bg-success-light{% else %}bg-danger-light{% endif %}">
+                                        {{ question.student_answer or 'No answer provided.' }}
+                                    </div>
+                                    
+                                    {% if question.is_correct %}
+                                    <div class="mt-2 text-success">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        <small>Your answer was marked as correct</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if not question.is_correct %}
+                                <div class="mb-3">
+                                    <h6 class="fw-bold">Correct Answer:</h6>
+                                    <div class="p-3 rounded bg-success-light">
+                                        {{ question.correct_answer }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if question.explanation %}
+                                <div>
+                                    <h6 class="fw-bold">Feedback:</h6>
+                                    <div class="explanation-box p-3 rounded">
+                                        {{ question.explanation }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('chapters.view_document', document_id=document.id) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Document
+                    </a>
+                    <div>
+                        <a href="{{ url_for('quiz.setup', document_id=document.id) }}" class="btn btn-outline-danger me-2">
+                            <i class="fas fa-redo me-2"></i>Take Another Quiz
+                        </a>
+                        <a href="{{ url_for('quiz.history', document_id=document.id) }}" class="btn btn-danger">
+                            <i class="fas fa-history me-2"></i>View Quiz History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .score-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        font-size: 2rem;
+        font-weight: bold;
+    }
+    
+    .score-circle.success {
+        background-color: rgba(25, 135, 84, 0.2);
+        color: #198754;
+        border: 3px solid #198754;
+    }
+    
+    .score-circle.warning {
+        background-color: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        border: 3px solid #ffc107;
+    }
+    
+    .score-circle.danger {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+        border: 3px solid #dc3545;
+    }
+    
+    .feedback-container {
+        background-color: #f8f9fa;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .explanation-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #0dcaf0;
+    }
+    
+    .bg-success-light {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+    
+    .bg-danger-light {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+    
+    .question-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* For feedback toggle animation */
+    #feedbackContainer {
+        transition: max-height 0.3s ease-out;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('toggleFeedback');
+        const feedbackContainer = document.getElementById('feedbackContainer');
+        const feedbackIcon = document.getElementById('feedbackIcon');
+        
+        // Set initial state (expanded)
+        feedbackContainer.style.maxHeight = feedbackContainer.scrollHeight + 'px';
+        
+        toggleBtn.addEventListener('click', function() {
+            if (feedbackContainer.style.maxHeight !== '0px') {
+                // Collapse
+                feedbackContainer.style.maxHeight = '0px';
+                feedbackIcon.classList.remove('fa-chevron-down');
+                feedbackIcon.classList.add('fa-chevron-right');
+            } else {
+                // Expand
+                feedbackContainer.style.maxHeight = feedbackContainer.scrollHeight + 'px';
+                feedbackIcon.classList.remove('fa-chevron-right');
+                feedbackIcon.classList.add('fa-chevron-down');
+            }
+        });
+    });
+</script>
+{% endblock %}

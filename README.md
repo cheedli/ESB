@@ -30,8 +30,8 @@ An adaptive learning platform where teachers can create courses with chapters, u
 
 1. Clone the repository
    ```
-   git clone https://github.com/yourusername/ESB-platform.git
-   cd ESB-platform
+   git clone https://github.com/cheedli/ESB.git
+   cd ESB
    ```
 
 2. Create and activate a virtual environment
@@ -58,7 +58,7 @@ An adaptive learning platform where teachers can create courses with chapters, u
 
 6. Run the application
    ```
-   flask run
+   flask run or py run.py
    ```
 
 7. Access the application at http://127.0.0.1:5000
@@ -80,6 +80,7 @@ An adaptive learning platform where teachers can create courses with chapters, u
    - Browse through course materials
    - View documents and their summaries
    - Use the AI assistant to ask questions about specific documents
+   - Do Quizes
 
 ## Project Structure
 
@@ -101,18 +102,6 @@ ESB_platform/
 ├── requirements.txt          # Project dependencies
 └── run.py                    # Application entry point
 ```
-
-## Deployment
-
-For production deployment:
-
-1. Update the `.env` file with production settings
-2. Use a production WSGI server like Gunicorn
-   ```
-   gunicorn -w 4 'run:app'
-   ```
-3. Consider using a proper database like PostgreSQL
-4. Set up a reverse proxy (Nginx/Apache) to handle static files and SSL
 
 ## License
 

@@ -49,8 +49,44 @@
                     {{ form.hidden_tag() }}
                     
                     <div class="mb-4">
-                        {{ form.answer.label(class="form-label fw-bold") }}
-                        {{ form.answer(class="form-control", rows=5, placeholder="Type your answer here...") }}
+                        <div class="choices-container">
+                            <div class="choice-item mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="answer" id="choice_a" value="A" required>
+                                    <label class="form-check-label w-100" for="choice_a">
+                                        <div class="d-flex align-items-center">
+                                            <span class="choice-letter me-2">A</span>
+                                            <span>{{ question.choice_a }}</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="choice-item mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="answer" id="choice_b" value="B" required>
+                                    <label class="form-check-label w-100" for="choice_b">
+                                        <div class="d-flex align-items-center">
+                                            <span class="choice-letter me-2">B</span>
+                                            <span>{{ question.choice_b }}</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="choice-item mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="answer" id="choice_c" value="C" required>
+                                    <label class="form-check-label w-100" for="choice_c">
+                                        <div class="d-flex align-items-center">
+                                            <span class="choice-letter me-2">C</span>
+                                            <span>{{ question.choice_c }}</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
                         {% for error in form.answer.errors %}
                         <span class="text-danger">{{ error }}</span>
                         {% endfor %}
@@ -71,7 +107,7 @@
         <div class="text-center mt-4">
             <div class="alert alert-light" role="alert">
                 <i class="fas fa-info-circle me-2 text-danger"></i>
-                <span>Answer each question to the best of your ability. You'll get feedback at the end of the quiz.</span>
+                <span>Select one answer for each question. You'll receive feedback at the end of the quiz.</span>
             </div>
         </div>
     </div>
@@ -86,5 +122,77 @@
         border-radius: 0.5rem;
         border-left: 4px solid #dc3545;
     }
+    
+    .choices-container {
+        margin-top: 1.5rem;
+    }
+    
+    .choice-item {
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    
+    .choice-item:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .form-check {
+        padding: 1rem;
+        margin: 0;
+    }
+    
+    .form-check-input {
+        margin-top: 0.3rem;
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+        padding-left: 0.5rem;
+    }
+    
+    .choice-letter {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 50%;
+        font-weight: bold;
+    }
+    
+    /* Styling for selected choice */
+    .form-check-input:checked + .form-check-label {
+        font-weight: bold;
+    }
+    
+    .form-check-input:checked + .form-check-label .choice-letter {
+        background-color: #0d6efd;
+    }
+    
+    .form-check-input:checked ~ .choice-item {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
 </style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add click event to the entire choice item, not just the radio button
+        const choiceItems = document.querySelectorAll('.choice-item');
+        
+        choiceItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+            });
+        });
+    });
+</script>
 {% endblock %}

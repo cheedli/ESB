@@ -51,9 +51,10 @@ An adaptive learning platform where teachers can create courses with chapters, u
 
 5. Initialize the database
    ```
-   flask db init
-   flask db migrate -m "Initial migration"
-   flask db upgrade
+   python -m flask db init
+   python -m flask db migrate -m "Add choices to quiz_question"
+   python -m flask db upgrade
+
    ```
 
 6. Run the application

@@ -100,83 +100,130 @@
                     </table>
                 </div>
                 
-            
-{% if quizzes|selectattr('score', 'defined')|list|length > 0 %}
-<div class="mt-4">
-    <h5 class="mb-3"><i class="fas fa-chart-line me-2 text-danger"></i>Your Progress</h5>
-    
-    <!-- Progress Chart -->
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card mb-4">
-                <div class="card-header bg-light">
-                    <i class="fas fa-chart-line me-2 text-danger"></i>Score Progression
-                </div>
-                <div class="card-body">
-                    <div class="progress-chart-container" style="height: 300px;">
-                        <canvas id="progressChart"></canvas>
+                {% if quizzes|selectattr('score', 'defined')|list|length > 0 %}
+                <div class="mt-5">
+                    <h5 class="mb-3"><i class="fas fa-chart-line me-2 text-danger"></i>Your Progress</h5>
+                    
+                    <!-- Progress Chart -->
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <i class="fas fa-chart-line me-2 text-danger"></i>Score Progression
+                                </div>
+                                <div class="card-body">
+                                    <div class="progress-chart-container" style="height: 300px;">
+                                        <canvas id="progressChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <i class="fas fa-medal me-2 text-danger"></i>Performance Summary
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex flex-column">
+                                        <div class="mb-3 text-center">
+                                            <h2 class="mb-0" id="averageScore">--</h2>
+                                            <small class="text-muted">Average Score</small>
+                                        </div>
+                                        <div class="mb-3 text-center">
+                                            <h2 class="mb-0" id="bestScore">--</h2>
+                                            <small class="text-muted">Best Score</small>
+                                        </div>
+                                        <div class="mb-3 text-center">
+                                            <h2 class="mb-0" id="totalQuizzes">--</h2>
+                                            <small class="text-muted">Total Quizzes</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Analytics -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <i class="fas fa-chart-pie me-2 text-danger"></i>Performance by Difficulty
+                                </div>
+                                <div class="card-body">
+                                    <div style="height: 250px;">
+                                        <canvas id="difficultyChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <i class="fas fa-graduation-cap me-2 text-danger"></i>Multiple Choice Performance
+                                </div>
+                                <div class="card-body p-4">
+                                    <div class="pb-2 mb-3 border-bottom">
+                                        <h6 class="mb-2">Question Completion</h6>
+                                        <div class="d-flex justify-content-between">
+                                            <div>Total Questions Attempted</div>
+                                            <div class="fw-bold" id="totalQuestionsAttempted">--</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <h6 class="mb-2">Answer Distribution</h6>
+                                        <div class="answer-stats mb-2">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>Choice A Selected</span>
+                                                <span class="fw-bold" id="choiceACount">--</span>
+                                            </div>
+                                            <div class="progress" style="height: 10px;">
+                                                <div class="progress-bar bg-info" id="choiceABar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="answer-stats mb-2">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>Choice B Selected</span>
+                                                <span class="fw-bold" id="choiceBCount">--</span>
+                                            </div>
+                                            <div class="progress" style="height: 10px;">
+                                                <div class="progress-bar bg-info" id="choiceBBar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="answer-stats mb-2">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>Choice C Selected</span>
+                                                <span class="fw-bold" id="choiceCCount">--</span>
+                                            </div>
+                                            <div class="progress" style="height: 10px;">
+                                                <div class="progress-bar bg-info" id="choiceCBar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4">
-            <div class="card mb-4">
-                <div class="card-header bg-light">
-                    <i class="fas fa-medal me-2 text-danger"></i>Performance Summary
-                </div>
-                <div class="card-body">
-                    <div class="d-flex flex-column">
-                        <div class="mb-3 text-center">
-                            <h2 class="mb-0" id="averageScore">--</h2>
-                            <small class="text-muted">Average Score</small>
-                        </div>
-                        <div class="mb-3 text-center">
-                            <h2 class="mb-0" id="bestScore">--</h2>
-                            <small class="text-muted">Best Score</small>
-                        </div>
-                        <div class="mb-3 text-center">
-                            <h2 class="mb-0" id="totalQuizzes">--</h2>
-                            <small class="text-muted">Total Quizzes</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Additional Analytics -->
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header bg-light">
-                    <i class="fas fa-chart-pie me-2 text-danger"></i>Performance by Difficulty
-                </div>
-                <div class="card-body">
-                    <div style="height: 250px;">
-                        <canvas id="difficultyChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-  
-</div>
-{% endif %}
+                {% endif %}
 
-{% else %}
-<div class="text-center py-5">
-    <div class="mb-3">
-        <i class="fas fa-book-reader fa-4x text-muted"></i>
-    </div>
-    <h5 class="text-muted">You haven't taken any quizzes yet</h5>
-    <p class="text-muted">Test your knowledge of this document by taking a quiz.</p>
-    <a href="{{ url_for('quiz.setup', document_id=document.id) }}" class="btn btn-danger mt-2">
-        <i class="fas fa-plus-circle me-2"></i>Take Your First Quiz
-    </a>
-</div>
-{% endif %}
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-book-reader fa-4x text-muted"></i>
+                    </div>
+                    <h5 class="text-muted">You haven't taken any quizzes yet</h5>
+                    <p class="text-muted">Test your knowledge of this document by taking a multiple-choice quiz.</p>
+                    <a href="{{ url_for('quiz.setup', document_id=document.id) }}" class="btn btn-danger mt-2">
+                        <i class="fas fa-plus-circle me-2"></i>Take Your First Quiz
+                    </a>
+                </div>
+                {% endif %}
 
             </div>
             <div class="card-footer">
@@ -208,8 +255,17 @@ document.addEventListener('DOMContentLoaded', function() {
             fullDate: '{{ quiz.created_at.strftime("%b %d, %Y") }}',
             score: {{ quiz.score }},
             difficulty: '{{ quiz.difficulty }}',
-            numQuestions: {{ quiz.num_questions }}
-        },
+            numQuestions: {{ quiz.num_questions }},
+            questions: [
+                {% for question in quiz.questions %}
+                {
+                    studentChoice: '{{ question.student_choice or "" }}',
+                    correctChoice: '{{ question.correct_choice or "" }}',
+                    isCorrect: {{ 'true' if question.is_correct else 'false' }}
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ]
+        }{% if not loop.last %},{% endif %}
         {% endfor %}
     ];
     
@@ -310,9 +366,39 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Total completed quizzes
         document.getElementById('totalQuizzes').textContent = quizData.length;
+        
+        // Calculate multiple choice stats
+        const allQuestions = quizData.flatMap(quiz => quiz.questions);
+        document.getElementById('totalQuestionsAttempted').textContent = allQuestions.length;
+        
+        // Choices A, B, C stats
+        const choiceACounts = allQuestions.filter(q => q.studentChoice === 'A').length;
+        const choiceBCounts = allQuestions.filter(q => q.studentChoice === 'B').length;
+        const choiceCCounts = allQuestions.filter(q => q.studentChoice === 'C').length;
+        
+        document.getElementById('choiceACount').textContent = choiceACounts;
+        document.getElementById('choiceBCount').textContent = choiceBCounts;
+        document.getElementById('choiceCCount').textContent = choiceCCounts;
+        
+        // Calculate percentages
+        const total = choiceACounts + choiceBCounts + choiceCCounts;
+        if (total > 0) {
+            const choiceAPercent = (choiceACounts / total) * 100;
+            const choiceBPercent = (choiceBCounts / total) * 100;
+            const choiceCPercent = (choiceCCounts / total) * 100;
+            
+            document.getElementById('choiceABar').style.width = choiceAPercent + '%';
+            document.getElementById('choiceABar').setAttribute('aria-valuenow', choiceAPercent);
+            
+            document.getElementById('choiceBBar').style.width = choiceBPercent + '%';
+            document.getElementById('choiceBBar').setAttribute('aria-valuenow', choiceBPercent);
+            
+            document.getElementById('choiceCBar').style.width = choiceCPercent + '%';
+            document.getElementById('choiceCBar').setAttribute('aria-valuenow', choiceCPercent);
+        }
     }
     
-    // Group by difficulty (define outside chart function to make it available for all sections)
+    // Group by difficulty 
     const difficultyGroups = {
         easy: quizData.filter(quiz => quiz.difficulty === 'easy'),
         medium: quizData.filter(quiz => quiz.difficulty === 'medium'),

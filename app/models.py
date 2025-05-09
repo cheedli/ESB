@@ -161,18 +161,22 @@ class Quiz(db.Model):
     def __repr__(self):
         return f'<Quiz {self.id} - {self.difficulty}>'
 
+
 class QuizQuestion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
     question_text = db.Column(db.Text, nullable=False)
-    correct_answer = db.Column(db.Text, nullable=False)
-    student_answer = db.Column(db.Text, nullable=True)
+    choice_a = db.Column(db.Text, nullable=False)
+    choice_b = db.Column(db.Text, nullable=False)
+    choice_c = db.Column(db.Text, nullable=False)
+    correct_choice = db.Column(db.String(1), nullable=False)  # 'A', 'B', or 'C'
+    student_choice = db.Column(db.String(1), nullable=True)  # 'A', 'B', or 'C'
     is_correct = db.Column(db.Boolean, nullable=True)
     explanation = db.Column(db.Text, nullable=True)  # Explanation for the correct answer
     
     def __repr__(self):
         return f'<QuizQuestion {self.id}>'
-    
+  
 class Note(db.Model):
     __tablename__ = 'notes'
     

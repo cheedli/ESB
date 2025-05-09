@@ -23,7 +23,9 @@ class QuizSetupForm(FlaskForm):
     submit = SubmitField('Start Quiz')
 
 class QuizAnswerForm(FlaskForm):
-    answer = TextAreaField('Your Answer', validators=[DataRequired()])
+    answer = RadioField('Your Answer', 
+                      choices=[('A', 'A'), ('B', 'B'), ('C', 'C')],
+                      validators=[DataRequired()])
     submit = SubmitField('Submit Answer')
 
 # Routes
@@ -71,7 +73,10 @@ def setup(document_id):
                 quiz_question = QuizQuestion(
                     quiz_id=quiz.id,
                     question_text=question_data['question'],
-                    correct_answer=question_data['answer'],
+                    choice_a=question_data['choice_a'],
+                    choice_b=question_data['choice_b'],
+                    choice_c=question_data['choice_c'],
+                    correct_choice=question_data['correct_choice'],
                     explanation=question_data.get('explanation', '')
                 )
                 db.session.add(quiz_question)
@@ -92,8 +97,6 @@ def setup(document_id):
                           chapter=chapter,
                           course=course,
                           form=form)
-
-# Replace the take route in quiz.py with this updated version
 
 @quiz_bp.route('/take/<int:quiz_id>/<int:question_index>', methods=['GET', 'POST'])
 @login_required
@@ -124,30 +127,13 @@ def take(quiz_id, question_index):
     form = QuizAnswerForm()
     
     if form.validate_on_submit():
-        # Save the student's answer
-        current_question.student_answer = form.answer.data
+        # Save the student's choice
+        student_choice = form.answer.data
+        current_question.student_choice = student_choice
         
-        # Use AI to evaluate the answer
-        try:
-            from app.services.ai_service import evaluate_quiz_answer
-            
-            is_correct, feedback = evaluate_quiz_answer(
-                student_answer=form.answer.data,
-                correct_answer=current_question.correct_answer,
-                question_text=current_question.question_text
-            )
-            
-            current_question.is_correct = is_correct
-            
-            # Store feedback in the explanation if it's not already there
-            if feedback and not current_question.explanation:
-                current_question.explanation = feedback
-            
-        except Exception as e:
-            # Fall back to simple string matching if AI evaluation fails
-            flash(f"AI answer evaluation failed. Using basic comparison instead.", 'warning')
-            is_correct = form.answer.data.lower().strip() == current_question.correct_answer.lower().strip()
-            current_question.is_correct = is_correct
+        # Check if the answer is correct
+        is_correct = student_choice == current_question.correct_choice
+        current_question.is_correct = is_correct
         
         db.session.commit()
         
@@ -266,8 +252,6 @@ def history(document_id):
                           course=course,
                           quizzes=quizzes)
 
-
-
 @quiz_bp.app_template_filter('md_to_html')
 def md_to_html(text):
     """
@@ -282,7 +266,3 @@ def md_to_html(text):
     text = text.replace('<br>', '\n')    
     text = text.replace('\n', '<br />')
     return Markup(text)
-
-
-
-

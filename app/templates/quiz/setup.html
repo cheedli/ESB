@@ -31,7 +31,7 @@
             <div class="card-body">
                 <div class="alert alert-light mb-4">
                     <h5><i class="fas fa-lightbulb me-2 text-warning"></i>How it works</h5>
-                    <p>Our AI will generate quiz questions based on the content of "{{ document.title }}". You'll be presented with questions one at a time and can type your answers.</p>
+                    <p>Our AI will generate multiple-choice quiz questions based on the content of "{{ document.title }}". Each question will have three possible answers, with only one being correct.</p>
                     <p class="mb-0">After completing the quiz, you'll receive personalized feedback on your performance and recommendations for improvement.</p>
                 </div>
                 
@@ -93,6 +93,33 @@
                         {% endfor %}
                     </div>
                     
+                    <!-- Quiz Format Info Card -->
+                    <div class="card mb-4 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-info-circle text-primary me-2"></i>
+                                Multiple Choice Format
+                            </h6>
+                            <div class="d-flex">
+                                <div class="example-question-box p-3 rounded border flex-grow-1">
+                                    <div class="mb-2"><strong>Example Question:</strong> What is the main function of a document summary?</div>
+                                    <div class="example-choices mt-3">
+                                        <div class="example-choice mb-2 p-2 rounded">
+                                            <span class="example-choice-letter me-2">A</span> To provide a detailed analysis of all content
+                                        </div>
+                                        <div class="example-choice mb-2 p-2 rounded bg-success-light">
+                                            <span class="example-choice-letter me-2">B</span> To capture the most important points concisely
+                                            <span class="badge bg-success float-end"><i class="fas fa-check"></i> Correct</span>
+                                        </div>
+                                        <div class="example-choice mb-2 p-2 rounded">
+                                            <span class="example-choice-letter me-2">C</span> To list all references and citations
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="d-flex justify-content-between">
                         <a href="{{ url_for('chapters.view_document', document_id=document.id) }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Back to Document
@@ -132,6 +159,33 @@
     .difficulty-option .form-check-input:checked + .form-check-label {
         background-color: #f8d7da;
         border-color: #dc3545;
+    }
+    
+    /* Styling for example multiple choice question */
+    .example-question-box {
+        background-color: #fff;
+    }
+    
+    .example-choice {
+        border: 1px solid #dee2e6;
+    }
+    
+    .example-choice-letter {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background-color: #6c757d;
+        color: white;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+    
+    .bg-success-light {
+        background-color: rgba(25, 135, 84, 0.1);
+        border-color: #198754 !important;
     }
 </style>
 {% endblock %}

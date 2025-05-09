@@ -76,10 +76,9 @@
                 
                 <div class="accordion" id="questionAccordion">
                     {% for question in questions %}
-                 
-                    <div class="accordion-item mb-2">
+                    <div class="accordion-item mb-3 border {% if question.is_correct %}border-success{% else %}border-danger{% endif %}">
                         <h2 class="accordion-header" id="heading{{ question.id }}">
-                            <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" 
+                            <button class="accordion-button {% if not loop.first %}collapsed{% endif %} {% if question.is_correct %}bg-success-light{% else %}bg-danger-light{% endif %}" type="button" 
                                 data-bs-toggle="collapse" data-bs-target="#collapse{{ question.id }}" 
                                 aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="collapse{{ question.id }}">
                                 <div class="d-flex w-100 justify-content-between align-items-center">
@@ -97,39 +96,88 @@
                         <div id="collapse{{ question.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" 
                             aria-labelledby="heading{{ question.id }}" data-bs-parent="#questionAccordion">
                             <div class="accordion-body">
-                                <div class="mb-3">
+                                <div class="mb-4">
                                     <h6 class="fw-bold">Question:</h6>
                                     <p>{{ question.question_text }}</p>
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <h6 class="fw-bold">Your Answer:</h6>
-                                    <div class="p-3 rounded {% if question.is_correct %}bg-success-light{% else %}bg-danger-light{% endif %}">
-                                        {{ question.student_answer or 'No answer provided.' }}
+                                <div class="mb-4">
+                                    <h6 class="fw-bold">Answer Choices:</h6>
+                                    
+                                    <!-- Choice A -->
+                                    <div class="choice-result-item mb-2 p-3 rounded 
+                                        {% if question.correct_choice == 'A' %}bg-success-light border-success{% elif question.student_choice == 'A' and question.student_choice != question.correct_choice %}bg-danger-light border-danger{% else %}bg-light{% endif %}">
+                                        <div class="d-flex align-items-center">
+                                            <span class="choice-letter me-3 
+                                                {% if question.correct_choice == 'A' %}bg-success{% elif question.student_choice == 'A' and question.student_choice != question.correct_choice %}bg-danger{% endif %}">
+                                                A
+                                            </span>
+                                            <span>{{ question.choice_a }}</span>
+                                            
+                                            {% if question.correct_choice == 'A' %}
+                                            <span class="ms-auto badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Correct
+                                            </span>
+                                            {% elif question.student_choice == 'A' %}
+                                            <span class="ms-auto badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Your Choice
+                                            </span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                     
-                                    {% if question.is_correct %}
-                                    <div class="mt-2 text-success">
-                                        <i class="fas fa-check-circle me-1"></i>
-                                        <small>Your answer was marked as correct</small>
+                                    <!-- Choice B -->
+                                    <div class="choice-result-item mb-2 p-3 rounded 
+                                        {% if question.correct_choice == 'B' %}bg-success-light border-success{% elif question.student_choice == 'B' and question.student_choice != question.correct_choice %}bg-danger-light border-danger{% else %}bg-light{% endif %}">
+                                        <div class="d-flex align-items-center">
+                                            <span class="choice-letter me-3 
+                                                {% if question.correct_choice == 'B' %}bg-success{% elif question.student_choice == 'B' and question.student_choice != question.correct_choice %}bg-danger{% endif %}">
+                                                B
+                                            </span>
+                                            <span>{{ question.choice_b }}</span>
+                                            
+                                            {% if question.correct_choice == 'B' %}
+                                            <span class="ms-auto badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Correct
+                                            </span>
+                                            {% elif question.student_choice == 'B' %}
+                                            <span class="ms-auto badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Your Choice
+                                            </span>
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    {% endif %}
-                                </div>
-                                
-                                {% if not question.is_correct %}
-                                <div class="mb-3">
-                                    <h6 class="fw-bold">Correct Answer:</h6>
-                                    <div class="p-3 rounded bg-success-light">
-                                        {{ question.correct_answer }}
+                                    
+                                    <!-- Choice C -->
+                                    <div class="choice-result-item mb-2 p-3 rounded 
+                                        {% if question.correct_choice == 'C' %}bg-success-light border-success{% elif question.student_choice == 'C' and question.student_choice != question.correct_choice %}bg-danger-light border-danger{% else %}bg-light{% endif %}">
+                                        <div class="d-flex align-items-center">
+                                            <span class="choice-letter me-3 
+                                                {% if question.correct_choice == 'C' %}bg-success{% elif question.student_choice == 'C' and question.student_choice != question.correct_choice %}bg-danger{% endif %}">
+                                                C
+                                            </span>
+                                            <span>{{ question.choice_c }}</span>
+                                            
+                                            {% if question.correct_choice == 'C' %}
+                                            <span class="ms-auto badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Correct
+                                            </span>
+                                            {% elif question.student_choice == 'C' %}
+                                            <span class="ms-auto badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Your Choice
+                                            </span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
-                                {% endif %}
                                 
                                 {% if question.explanation %}
-                                <div>
-                                    <h6 class="fw-bold">Feedback:</h6>
+                                <div class="mt-4">
+                                    <h6 class="fw-bold">Explanation:</h6>
                                     <div class="explanation-box p-3 rounded">
-                                        {{ question.explanation }}
+                                        {% autoescape false %}
+                                        {{ question.explanation|md_to_html|safe }}
+                                        {% endautoescape %}
                                     </div>
                                 </div>
                                 {% endif %}
@@ -192,9 +240,20 @@
         border-left: 4px solid #dc3545;
     }
     
-    .explanation-box {
-        background-color: #f8f9fa;
-        border-left: 4px solid #0dcaf0;
+    .choice-letter {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        color: white;
+        background-color: #6c757d;
+        border-radius: 50%;
+        font-weight: bold;
+    }
+    
+    .choice-result-item {
+        border: 1px solid #dee2e6;
     }
     
     .bg-success-light {
@@ -203,6 +262,19 @@
     
     .bg-danger-light {
         background-color: rgba(220, 53, 69, 0.1);
+    }
+    
+    .border-success {
+        border-color: #198754 !important;
+    }
+    
+    .border-danger {
+        border-color: #dc3545 !important;
+    }
+    
+    .explanation-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #0dcaf0;
     }
     
     .question-text {
@@ -214,6 +286,15 @@
     /* For feedback toggle animation */
     #feedbackContainer {
         transition: max-height 0.3s ease-out;
+        overflow: hidden;
+    }
+    
+    /* Accordion styling */
+    .accordion-button:not(.collapsed) {
+        box-shadow: none;
+    }
+    
+    .accordion-item {
         overflow: hidden;
     }
 </style>

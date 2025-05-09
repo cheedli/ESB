@@ -153,10 +153,10 @@ def get_ai_response(user_message, document_summary, chat_history=None):
         current_app.logger.error(f"Error calling Groq API: {str(e)}")
         raise ValueError(f"Error generating response: {str(e)}")
 
-   
+  
 def generate_quiz_questions(document_summary, difficulty, num_questions):
     """
-    Generate quiz questions based on document content
+    Generate multiple choice quiz questions based on document content
     
     Args:
         document_summary (str): Summary of the document
@@ -164,7 +164,7 @@ def generate_quiz_questions(document_summary, difficulty, num_questions):
         num_questions (int): Number of questions to generate
         
     Returns:
-        list: List of dictionaries containing questions, answers, and explanations
+        list: List of dictionaries containing questions, choices, and correct answers
     """
     # Get API key from config
     api_key = current_app.config.get('GROQ_API_KEY')
@@ -183,23 +183,27 @@ def generate_quiz_questions(document_summary, difficulty, num_questions):
         complexity = "challenging questions that require synthesis, evaluation, and critical thinking"
     
     prompt = f"""
-    Based on the following document summary, generate {num_questions} {difficulty} level quiz questions.
+    Based on the following document summary, generate {num_questions} {difficulty} level multiple-choice quiz questions.
     
     For each question:
     1. The question should be clear and specific
     2. The question should test {complexity}
-    3. Provide the correct answer
-    4. Include a brief explanation of why the answer is correct
+    3. Provide exactly THREE answer choices labeled A, B, and C
+    4. Only ONE of the choices should be correct
+    5. Clearly indicate which choice is correct (A, B, or C)
+    6. Include a brief explanation of why the correct answer is right
     
     Document Summary:
     {document_summary}
     
-    Please format your response as a JSON array of objects, each with 'question', 'answer', and 'explanation' fields.
-    Example:
+    Please format your response as a JSON array of objects, with the following structure:
     [
         {{
             "question": "What is the main topic of this document?",
-            "answer": "The main topic is machine learning algorithms.",
+            "choice_a": "Machine learning algorithms",
+            "choice_b": "Data structures",
+            "choice_c": "Network protocols",
+            "correct_choice": "A",
             "explanation": "The document primarily focuses on explaining different machine learning algorithms and their applications."
         }},
         ...
@@ -218,7 +222,7 @@ def generate_quiz_questions(document_summary, difficulty, num_questions):
         "messages": [
             {
                 "role": "system",
-                "content": "You are an educational quiz generator that creates questions based on document content."
+                "content": "You are an educational quiz generator that creates multiple-choice questions based on document content."
             },
             {
                 "role": "user",
@@ -277,13 +281,17 @@ def generate_quiz_feedback(questions, score, document_summary):
     for q in incorrect_questions:
         incorrect_info.append({
             "question": q.question_text,
-            "student_answer": q.student_answer,
-            "correct_answer": q.correct_answer
+            "student_choice": q.student_choice,
+            "correct_choice": q.correct_choice,
+            "choice_a": q.choice_a,
+            "choice_b": q.choice_b,
+            "choice_c": q.choice_c,
+            "explanation": q.explanation
         })
     
     # Prepare the prompt
     prompt = f"""
-    Generate personalized feedback for a student who completed a quiz on the following topic:
+    Generate personalized feedback for a student who completed a multiple-choice quiz on the following topic:
     
     Document Summary:
     {document_summary}
@@ -337,8 +345,8 @@ def generate_quiz_feedback(questions, score, document_summary):
         return feedback
     except Exception as e:
         current_app.logger.error(f"Error generating quiz feedback: {str(e)}")
-        raise ValueError(f"Error generating quiz feedback: {str(e)}")
-    
+        raise ValueError(f"Error generating quiz feedback: {str(e)}")    
+
 def evaluate_quiz_answer(student_answer, correct_answer, question_text):
     """
     Evaluate if a student's answer is correct using AI

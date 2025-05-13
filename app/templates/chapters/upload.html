@@ -42,7 +42,7 @@
                             {{ form.file(class="form-control", id="fileInput") }}
                             <label class="input-group-text" for="fileInput">Browse</label>
                         </div>
-                        <small class="form-text text-muted">Allowed file types: PDF, DOC, DOCX, PPT, PPTX</small>
+                        <small class="form-text text-muted">Allowed file types: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, CSV</small>
                         {% for error in form.file.errors %}
                         <span class="text-danger">{{ error }}</span>
                         {% endfor %}

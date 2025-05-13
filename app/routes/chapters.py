@@ -25,7 +25,7 @@ class DocumentForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired(), Length(min=3, max=100)])
     file = FileField('File', validators=[
         DataRequired(),
-        FileAllowed(['pdf', 'doc', 'docx', 'ppt', 'pptx'], 'Only PDF, DOC, DOCX, PPT, and PPTX files are allowed!')
+        FileAllowed(['pdf', 'doc', 'docx', 'ppt', 'pptx','xls','xlsx','csv'], 'Only PDF, DOC, DOCX, PPT, and PPTX files are allowed!')
     ])
     submit = SubmitField('Upload Document')
 

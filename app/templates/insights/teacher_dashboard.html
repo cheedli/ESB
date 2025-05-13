@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Insights Dashboard{% endblock %}
+
+{% block heading %}Teacher Insights Dashboard{% endblock %}
+
+{% block styles %}
+<style>
+    .stats-card {
+        transition: transform 0.3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .student-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Insights Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card stats-card text-center h-100 border-danger">
+                                <div class="card-body">
+                                    <i class="fas fa-book fa-3x text-danger mb-3"></i>
+                                    <h2>{{ courses|length }}</h2>
+                                    <p class="text-muted mb-0">Courses</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stats-card text-center h-100 border-primary">
+                                <div class="card-body">
+                                    <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                                    <h2>{{ enrolled_students|length }}</h2>
+                                    <p class="text-muted mb-0">Students</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stats-card text-center h-100 border-success">
+                                <div class="card-body">
+                                    <i class="fas fa-file-alt fa-3x text-success mb-3"></i>
+                                    <h2>{{ course_stats|sum(attribute='quiz_count') }}</h2>
+                                    <p class="text-muted mb-0">Total Quizzes</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stats-card text-center h-100 border-warning">
+                                <div class="card-body">
+                                    <i class="fas fa-percentage fa-3x text-warning mb-3"></i>
+                                    {% set total_score = 0 %}
+                                    {% set course_count = 0 %}
+                                    {% for stat in course_stats %}
+                                        {% if stat.avg_score > 0 %}
+                                            {% set total_score = total_score + stat.avg_score %}
+                                            {% set course_count = course_count + 1 %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if course_count > 0 %}
+                                        {% set avg_overall = (total_score / course_count)|round(1) %}
+                                    {% else %}
+                                        {% set avg_overall = 0 %}
+                                    {% endif %}
+                                    <h2>{{ avg_overall }}%</h2>
+                                    <p class="text-muted mb-0">Avg. Score</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-book me-2"></i>Your Courses
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if courses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Students</th>
+                                    <th>Quizzes</th>
+                                    <th>Avg. Score</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in course_stats %}
+                                <tr>
+                                    <td>{{ stat.course.title }}</td>
+                                    <td>{{ stat.student_count }}</td>
+                                    <td>{{ stat.quiz_count }}</td>
+                                    <td>
+                                        {% if stat.avg_score > 0 %}
+                                            <span class="badge bg-{{ 'success' if stat.avg_score >= 70 else 'warning' if stat.avg_score >= 50 else 'danger' }}">
+                                                {{ stat.avg_score }}%
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('insights.course_insights', course_id=stat.course.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-chart-bar me-1"></i>View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>You don't have any courses yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>Your Students
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if enrolled_students %}
+                    <div class="student-list">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Email</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in enrolled_students %}
+                                <tr>
+                                    <td>{{ student.username }}</td>
+                                    <td>{{ student.email }}</td>
+                                    <td>
+                                        <a href="{{ url_for('insights.student_insights', student_id=student.id) }}" class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-chart-line me-1"></i>Insights
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>No students enrolled in your courses.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}

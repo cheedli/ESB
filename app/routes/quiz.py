@@ -8,15 +8,12 @@ from app import db
 from app.models import Document, Quiz, QuizQuestion, Enrollment, Course, Chapter
 from app.services.ai_service import generate_quiz_questions, generate_quiz_feedback
 import re
-from flask import Markup
+from markupsafe import Markup
 
 quiz_bp = Blueprint('quiz', __name__, url_prefix='/quiz')
 
 # Forms
 class QuizSetupForm(FlaskForm):
-    difficulty = SelectField('Difficulty', 
-                           choices=[('easy', 'Easy'), ('medium', 'Medium'), ('hard', 'Hard')],
-                           validators=[DataRequired()])
     num_questions = IntegerField('Number of Questions', 
                                validators=[DataRequired(), NumberRange(min=3, max=20)],
                                default=5)
@@ -53,7 +50,6 @@ def setup(document_id):
         quiz = Quiz(
             document_id=document_id,
             student_id=current_user.id,
-            difficulty=form.difficulty.data,
             num_questions=form.num_questions.data
         )
         db.session.add(quiz)
@@ -64,7 +60,6 @@ def setup(document_id):
             # Use document summary as context for generating questions
             questions = generate_quiz_questions(
                 document_summary=document.summary,
-                difficulty=form.difficulty.data,
                 num_questions=form.num_questions.data
             )
             

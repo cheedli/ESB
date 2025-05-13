@@ -153,8 +153,7 @@ def get_ai_response(user_message, document_summary, chat_history=None):
         current_app.logger.error(f"Error calling Groq API: {str(e)}")
         raise ValueError(f"Error generating response: {str(e)}")
 
-  
-def generate_quiz_questions(document_summary, difficulty, num_questions):
+def generate_quiz_questions(document_summary, num_questions):
     """
     Generate multiple choice quiz questions based on document content
     
@@ -172,22 +171,12 @@ def generate_quiz_questions(document_summary, difficulty, num_questions):
         raise ValueError("Groq API key is not configured")
     
     # Get the model from config
-    model = current_app.config.get('GROQ_LLAMA_MODEL')
-    
-    # Prepare the prompt based on difficulty
-    if difficulty == 'easy':
-        complexity = "basic recall and simple understanding questions"
-    elif difficulty == 'medium':
-        complexity = "questions that require application and analysis of concepts"
-    else:  # hard
-        complexity = "challenging questions that require synthesis, evaluation, and critical thinking"
-    
+    model = current_app.config.get('GROQ_LLAMA_MODEL')   
     prompt = f"""
-    Based on the following document summary, generate {num_questions} {difficulty} level multiple-choice quiz questions.
+    Based on the following document summary, generate {num_questions}  level multiple-choice quiz questions.
     
     For each question:
     1. The question should be clear and specific
-    2. The question should test {complexity}
     3. Provide exactly THREE answer choices labeled A, B, and C
     4. Only ONE of the choices should be correct
     5. Clearly indicate which choice is correct (A, B, or C)

@@ -45,7 +45,10 @@ def create_app(config_name=None):
     from app.routes.ai import ai_bp
     from app.routes.quiz import quiz_bp
     from app.routes.notes import notes
+    from app.routes.insights_routes import insights_bp  
 
+
+    app.register_blueprint(insights_bp  , url_prefix='/insights')  
 
     app.register_blueprint(quiz_bp)
     app.register_blueprint(auth_bp)

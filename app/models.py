@@ -5,6 +5,56 @@ from app import db, login_manager
 import os
 from flask import current_app
 from werkzeug.utils import secure_filename
+from datetime import datetime
+
+class UserSession(db.Model):
+    """Model to track user login/logout activities"""
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    login_time = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    logout_time = db.Column(db.DateTime, nullable=True)
+    ip_address = db.Column(db.String(45), nullable=True)  # IPv6 can be up to 45 chars
+    user_agent = db.Column(db.String(255), nullable=True)
+    
+    # Relationship
+    user = db.relationship('User', backref=db.backref('sessions', lazy=True))
+    
+    def __init__(self, user_id, ip_address=None, user_agent=None):
+        self.user_id = user_id
+        self.ip_address = ip_address
+        self.user_agent = user_agent
+    
+    def record_logout(self):
+        """Record the logout time for this session"""
+        self.logout_time = datetime.utcnow()
+        
+    @property
+    def duration(self):
+        """Calculate session duration in minutes"""
+        if self.logout_time:
+            return round((self.logout_time - self.login_time).total_seconds() / 60, 1)
+        return None
+    
+    @property
+    def is_active(self):
+        """Check if the session is still active (no logout recorded)"""
+        return self.logout_time is None
+    
+    def __repr__(self):
+        return f'<UserSession {self.id} - User {self.user_id}>'
+
+class TeacherStudent(db.Model):
+    __tablename__ = 'teacher_student'
+    teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+
+    # Optional: Add extra fields like timestamp or status if needed
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    teacher = db.relationship('User', foreign_keys=[teacher_id], backref='teacher_links')
+    student = db.relationship('User', foreign_keys=[student_id], backref='student_links')
+
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -13,17 +63,52 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     is_teacher = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
+    is_first_login = db.Column(db.Boolean, default=False)
+    groq_api_key = db.Column(db.String(255))
+
     courses_created = db.relationship('Course', backref='teacher', lazy='dynamic')
     enrollments = db.relationship('Enrollment', backref='student', lazy='dynamic')
-    
+
+    # Access related students or teachers via helper properties
+    students = db.relationship(
+        'User',
+        secondary='teacher_student',
+        primaryjoin='User.id == TeacherStudent.teacher_id',
+        secondaryjoin='User.id == TeacherStudent.student_id',
+        backref=db.backref('teachers', lazy='dynamic'),
+        lazy='dynamic'
+    )
+
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-    
+        self.password_hash = generate_password_hash(
+            password, 
+            method='pbkdf2:sha256', 
+        )
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
+
+    def add_student(self, student):
+        if not self.is_teacher or student.is_teacher or self.has_student(student):
+            return False
+        link = TeacherStudent(teacher=self, student=student)
+        db.session.add(link)
+        return True
+
+    def remove_student(self, student):
+        if not self.is_teacher:
+            return False
+        link = TeacherStudent.query.filter_by(teacher_id=self.id, student_id=student.id).first()
+        if link:
+            db.session.delete(link)
+            return True
+        return False
+
+    def has_student(self, student):
+        return TeacherStudent.query.filter_by(teacher_id=self.id, student_id=student.id).count() > 0
+
+    def get_all_students(self):
+        return [link.student for link in self.teacher_links]
+
     def __repr__(self):
         return f'<User {self.username}>'
 
@@ -146,7 +231,6 @@ class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     document_id = db.Column(db.Integer, db.ForeignKey('document.id'), nullable=True)  # Changed to nullable=True
     student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    difficulty = db.Column(db.String(20), nullable=False)  
     num_questions = db.Column(db.Integer, nullable=False)
     score = db.Column(db.Float, nullable=True) 
     feedback = db.Column(db.Text, nullable=True)  

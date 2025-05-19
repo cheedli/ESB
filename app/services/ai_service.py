@@ -4,6 +4,7 @@ import requests
 from flask import current_app
 from app.services.file_service import get_file_path, extract_text_from_file
 from app.models import Chapter, Document, Course
+from flask_login import current_user
 
 def generate_summary(file_path=None, file_type=None, text_content=None):
     """
@@ -18,7 +19,8 @@ def generate_summary(file_path=None, file_type=None, text_content=None):
         str: Generated summary
     """
     # Get API key from config
-    api_key = current_app.config.get('GROQ_API_KEY')
+    api_key = current_user.groq_api_key if current_user else None
+
     if not api_key:
         raise ValueError("Groq API key is not configured")
     
@@ -91,8 +93,9 @@ def get_ai_response(user_message, document_summary, chat_history=None):
     Returns:
         str: AI response
     """
+    api_key = current_user.groq_api_key if current_user else None
+
     # Get API key from config
-    api_key = current_app.config.get('GROQ_API_KEY')
     if not api_key:
         raise ValueError("Groq API key is not configured")
     
@@ -166,7 +169,8 @@ def generate_quiz_questions(document_summary, num_questions):
         list: List of dictionaries containing questions, choices, and correct answers
     """
     # Get API key from config
-    api_key = current_app.config.get('GROQ_API_KEY')
+    api_key = current_user.groq_api_key if current_user else None
+
     if not api_key:
         raise ValueError("Groq API key is not configured")
     
@@ -181,7 +185,7 @@ def generate_quiz_questions(document_summary, num_questions):
     4. Only ONE of the choices should be correct
     5. Clearly indicate which choice is correct (A, B, or C)
     6. Include a brief explanation of why the correct answer is right
-    
+    7.The quiz should be in the same language as the Document Summary.
     Document Summary:
     {document_summary}
     
@@ -254,8 +258,9 @@ def generate_quiz_feedback(questions, score, document_summary):
     Returns:
         str: Personalized feedback
     """
+    api_key = current_user.groq_api_key if current_user else None
+
     # Get API key from config
-    api_key = current_app.config.get('GROQ_API_KEY')
     if not api_key:
         raise ValueError("Groq API key is not configured")
     
@@ -299,6 +304,8 @@ def generate_quiz_feedback(questions, score, document_summary):
     4. Encouragement and positive reinforcement
     
     The feedback should be constructive, specific to their mistakes, and reference the content they were tested on.
+    The feedback should be in the same language as the Document Summary.
+
     """
     
     # Call Groq API
@@ -350,7 +357,8 @@ def evaluate_quiz_answer(student_answer, correct_answer, question_text):
         str: Feedback on the answer (optional)
     """
     # Get API key from config
-    api_key = current_app.config.get('GROQ_API_KEY')
+    api_key = current_user.groq_api_key if current_user else None
+
     if not api_key:
         raise ValueError("Groq API key is not configured")
     
@@ -371,7 +379,8 @@ def evaluate_quiz_answer(student_answer, correct_answer, question_text):
     The answer is correct if it demonstrates understanding of the core concept, even if it doesn't
     match the expected answer word-for-word. Spelling mistakes, grammatical errors, and
     slightly different phrasing should be tolerated if the main point is correct.
-    
+    The evaluation should be in the same language as the student answer.
+
     Respond in JSON format with two fields:
     1. "is_correct": true or false
     2. "feedback": brief specific feedback on the answer (what was good or what was missing)

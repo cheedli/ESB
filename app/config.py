@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from functools import lru_cache
 
 class Config:
     # Flask configuration
@@ -13,17 +14,18 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max file size
     ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'ppt', 'pptx','xls','xlsx','csv'}
     
-    # Groq API configuration
-    GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
-    GROQ_LLAMA_MODEL = "llama-3.1-8b-instant"  # Specify the model you want to use
+    # Groq API configuration - will be set dynamically in init_app
+    GROQ_API_KEY = None
+    GROQ_LLAMA_MODEL = "llama-3.1-8b-instant"
     
     # Session configuration
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+    
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///ESB.db')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///esb.db')
 
 
 class TestingConfig(Config):
@@ -44,3 +46,12 @@ class ProductionConfig(Config):
     REMEMBER_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_HTTPONLY = True
+
+
+# Create a config dictionary for easier access
+config = {
+    'development': DevelopmentConfig,
+    'testing': TestingConfig,
+    'production': ProductionConfig,
+    'default': DevelopmentConfig
+}

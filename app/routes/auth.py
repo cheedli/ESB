@@ -55,10 +55,13 @@ class AddStudentForm(FlaskForm):
     student_emails = TextAreaField('Student Emails (one per line)', validators=[DataRequired()])
     submit = SubmitField('Add Students')
 
-class UpdateGroqAPIKeyForm(FlaskForm):
-    api_key = StringField('Groq API Key', validators=[DataRequired()])
-    submit = SubmitField('Save API Key')
 
+class UpdateGroqAPIKeyForm(FlaskForm):
+    api_key = StringField('Groq API Key', validators=[
+        DataRequired(),
+        Length(min=20, max=100, message='API key must be between 20 and 100 characters')
+    ])
+    submit = SubmitField('Update API Key')
 # Helper function to generate a password from an email
 def generate_password_from_email(email):
     # Get the first part of the email (before @)
@@ -82,6 +85,48 @@ def generate_password_from_email(email):
 # Routes
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('courses.index'))
+    
+    form = LoginForm()
+    if form.validate_on_submit():
+        # Try to find user by username or email
+        user = User.query.filter_by(username=form.username.data).first()
+        if user is None:
+            user = User.query.filter_by(email=form.username.data).first()
+            
+        if user is None or not user.check_password(form.password.data):
+            flash('Invalid username/email or password', 'danger')
+            return redirect(url_for('auth.login'))
+        
+        login_user(user, remember=form.remember_me.data)
+        
+        # Record login session
+        user_session = UserSession(
+            user_id=user.id,
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string if request.user_agent else None
+        )
+        db.session.add(user_session)
+        db.session.commit()
+        
+        # Check if it's the first login (using auto-generated password)
+        if user.is_first_login:
+            flash('Please change your password.', 'warning')
+            return redirect(url_for('auth.change_password'))
+        
+        next_page = request.args.get('next')
+        if not next_page or not next_page.startswith('/'):
+            next_page = url_for('courses.index')
+        
+        flash('Login successful!', 'success')
+        return redirect(next_page)
+    
+    return render_template('auth/login.html', title='Sign In', form=form)
+
+
+@auth_bp.route('/', methods=['GET', 'POST'])
+def loginn():
     if current_user.is_authenticated:
         return redirect(url_for('courses.index'))
     
@@ -161,6 +206,34 @@ def register():
     
     return render_template('auth/register.html', title='Register', form=form)
 
+
+
+@auth_bp.route('/test_api_key_update')
+@login_required
+def test_api_key_update():
+    try:
+        # Try direct SQL update
+        from sqlalchemy import text
+        with db.engine.connect() as conn:
+            result = conn.execute(
+                text("UPDATE user SET groq_api_key = 'test_key_123' WHERE id = :user_id"),
+                {"user_id": current_user.id}
+            )
+            conn.commit()
+        
+        # Check if it worked
+        with db.engine.connect() as conn:
+            result = conn.execute(
+                text("SELECT groq_api_key FROM user WHERE id = :user_id"),
+                {"user_id": current_user.id}
+            )
+            row = result.fetchone()
+            key_value = row[0] if row else "No result"
+        
+        return f"Update attempted. Current value in DB: {key_value}"
+    except Exception as e:
+        return f"Error: {str(e)}"
+    
 @auth_bp.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
@@ -186,7 +259,7 @@ def change_password():
         db.session.commit()
         flash('Your password has been updated successfully', 'success')
         
-        return redirect(url_for('auth.profile'))
+        return redirect(url_for('auth.update_api_key'))
     
     return render_template('auth/change_password.html', title='Change Password', form=form)
 
@@ -201,15 +274,37 @@ def add_students():
 def update_api_key():
     form = UpdateGroqAPIKeyForm()
     
+    print(f"Current user: {current_user.id}, Current API key: {current_user.groq_api_key}")
+    
     # Pre-fill the form with existing API key if available
     if request.method == 'GET' and current_user.groq_api_key:
         form.api_key.data = current_user.groq_api_key
     
     if form.validate_on_submit():
-        current_user.groq_api_key = form.api_key.data
-        db.session.commit()
-        flash('Your API key has been updated successfully', 'success')
-        return redirect(url_for('auth.profile'))
+        try:
+            
+            print(f"Form submitted, new API key: {form.api_key.data}")
+            current_user.groq_api_key = form.api_key.data
+            db.session.commit()
+            print("Database commit successful")
+            
+            # Directly verify from database
+            from sqlalchemy import text
+            with db.engine.connect() as conn:
+                result = conn.execute(text(f"SELECT groq_api_key FROM user WHERE id = {current_user.id}"))
+                row = result.fetchone()
+                print(f"Direct DB check after commit: {row[0] if row else 'No result'}")
+            
+            # Refresh user from database to ensure up-to-date
+            db.session.refresh(current_user)
+            print(f"After refresh - Current API key: {current_user.groq_api_key}")
+            
+            flash('Your API key has been updated successfully', 'success')
+            return redirect(url_for('auth.profile'))
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error: {str(e)}")
+            flash(f'Error updating API key: {str(e)}', 'danger')
     
     return render_template('auth/update_api_key.html', title='Update API Key', form=form)
 

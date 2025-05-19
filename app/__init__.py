@@ -18,9 +18,13 @@ def create_app(config_name=None):
     
     # Load configuration
     if config_name is None:
-        app.config.from_object('app.config.DevelopmentConfig')
+        from app.config import DevelopmentConfig
+        app.config.from_object(DevelopmentConfig)
     else:
-        app.config.from_object(f'app.config.{config_name}Config')
+        config_module = __import__(f'app.config', fromlist=[f'{config_name}Config'])
+        config_class = getattr(config_module, f'{config_name}Config')
+        app.config.from_object(config_class)
+        config_class.init_app(app)
     
     # Ensure upload directory exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -47,16 +51,13 @@ def create_app(config_name=None):
     from app.routes.notes import notes
     from app.routes.insights_routes import insights_bp  
 
-
-    app.register_blueprint(insights_bp  , url_prefix='/insights')  
-
+    app.register_blueprint(insights_bp, url_prefix='/insights')  
     app.register_blueprint(quiz_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(courses_bp)
     app.register_blueprint(chapters_bp)
     app.register_blueprint(ai_bp)
     app.register_blueprint(notes, url_prefix='/notes')
-
     
     return app
 

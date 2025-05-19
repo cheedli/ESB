@@ -69,16 +69,15 @@ class User(UserMixin, db.Model):
     courses_created = db.relationship('Course', backref='teacher', lazy='dynamic')
     enrollments = db.relationship('Enrollment', backref='student', lazy='dynamic')
 
-    # In your User class, modify the students relationship definition
     students = db.relationship(
-        'User',
-        secondary='teacher_student',
-        primaryjoin='User.id == TeacherStudent.teacher_id',
-        secondaryjoin='User.id == TeacherStudent.student_id',
-        backref=db.backref('teachers', lazy='dynamic'),
-        lazy='dynamic',
-        overlaps="teacher_links,student_links"  # Add this line to acknowledge the overlap
-    )
+    'User',
+    secondary='teacher_student',
+    primaryjoin='User.id == TeacherStudent.teacher_id',
+    secondaryjoin='User.id == TeacherStudent.student_id',
+    backref=db.backref('teachers', lazy='dynamic', overlaps="teacher_links,student_links"),
+    lazy='dynamic',
+    overlaps="teacher_links,student_links" 
+)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(

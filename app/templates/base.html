@@ -26,6 +26,28 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
+                     <!-- Superuser Navigation Items -->
+                    {% if current_user.is_superuser %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="superuserDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-shield me-1"></i>Administration
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('superuser.dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('superuser.list_users') }}">
+                                <i class="fas fa-users me-2"></i>Manage Users
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('superuser.create_user') }}">
+                                <i class="fas fa-user-plus me-2"></i>Create User
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('superuser.list_relationships') }}">
+                                <i class="fas fa-user-friends me-2"></i>Manage Relationships
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('courses.index') }}">
@@ -54,6 +76,8 @@
                         </a>
                     </li>
                     {% endif %}
+                    
+                   
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
@@ -61,7 +85,9 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user-circle me-1"></i>{{ current_user.username }}
-                            {% if current_user.is_teacher %}
+                            {% if current_user.is_superuser %}
+                            <span class="badge rounded-pill bg-light text-danger ms-1">Superuser</span>
+                            {% elif current_user.is_teacher %}
                             <span class="badge rounded-pill bg-light text-danger ms-1">Teacher</span>
                             {% else %}
                             <span class="badge rounded-pill bg-light text-danger ms-1">Student</span>

@@ -56,28 +56,48 @@ class TeacherStudent(db.Model):
     student = db.relationship('User', foreign_keys=[student_id], backref='student_links')
 
 
+# Creating a Class model for student assignment
+class Classe(db.Model):
+    __tablename__ = 'classe'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    students = db.relationship('User', backref='classe', lazy='dynamic')
+    
+    def __repr__(self):
+        return f'<Classe {self.name}>'
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
     is_teacher = db.Column(db.Boolean, default=False)
+    is_superuser = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_first_login = db.Column(db.Boolean, default=False)
     groq_api_key = db.Column(db.String(255))
+    
+    # Adding class relationship
+    class_id = db.Column(db.Integer, db.ForeignKey('classe.id'), nullable=True)
 
     courses_created = db.relationship('Course', backref='teacher', lazy='dynamic')
     enrollments = db.relationship('Enrollment', backref='student', lazy='dynamic')
 
     students = db.relationship(
-    'User',
-    secondary='teacher_student',
-    primaryjoin='User.id == TeacherStudent.teacher_id',
-    secondaryjoin='User.id == TeacherStudent.student_id',
-    backref=db.backref('teachers', lazy='dynamic', overlaps="teacher_links,student_links"),
-    lazy='dynamic',
-    overlaps="teacher_links,student_links" 
-)
+        'User',
+        secondary='teacher_student',
+        primaryjoin='User.id == TeacherStudent.teacher_id',
+        secondaryjoin='User.id == TeacherStudent.student_id',
+        backref=db.backref('teachers', lazy='dynamic', overlaps="teacher_links,student_links"),
+        lazy='dynamic',
+        overlaps="teacher_links,student_links" 
+    )
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(
@@ -88,14 +108,14 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def add_student(self, student):
-        if not self.is_teacher or student.is_teacher or self.has_student(student):
+        if not (self.is_teacher or self.is_superuser) or student.is_teacher or self.has_student(student):
             return False
         link = TeacherStudent(teacher=self, student=student)
         db.session.add(link)
         return True
 
     def remove_student(self, student):
-        if not self.is_teacher:
+        if not (self.is_teacher or self.is_superuser):
             return False
         link = TeacherStudent.query.filter_by(teacher_id=self.id, student_id=student.id).first()
         if link:
@@ -108,14 +128,154 @@ class User(UserMixin, db.Model):
 
     def get_all_students(self):
         return [link.student for link in self.teacher_links]
+        
+    # Superuser specific methods
+    def create_user(self, username, email, password, is_teacher=False, is_superuser=False, class_id=None):
+        """Create a new user (superuser only)"""
+        if not self.is_superuser:
+            return None
+            
+        user = User(
+            username=username,
+            email=email,
+            is_teacher=is_teacher,
+            is_superuser=is_superuser,
+            class_id=class_id
+        )
+        user.set_password(password)
+        db.session.add(user)
+        return user
+    
+    def link_teacher_student(self, teacher_id, student_id):
+        """Create a relationship between teacher and student (superuser only)"""
+        if not self.is_superuser:
+            return False
+            
+        teacher = User.query.get(teacher_id)
+        student = User.query.get(student_id)
+        
+        if not teacher or not student or not teacher.is_teacher or student.is_teacher:
+            return False
+            
+        # Check if relationship already exists
+        if TeacherStudent.query.filter_by(teacher_id=teacher_id, student_id=student_id).first():
+            return False
+            
+        link = TeacherStudent(teacher_id=teacher_id, student_id=student_id)
+        db.session.add(link)
+        return True
+    
+    def link_teacher_to_class(self, teacher_id, class_id):
+        """Link a teacher to all students in a class (superuser only)"""
+        if not self.is_superuser:
+            return False, "Superuser privileges required"
+            
+        teacher = User.query.get(teacher_id)
+        class_obj = Classe.query.get(class_id)
+        
+        if not teacher or not class_obj:
+            return False, "Teacher or class not found"
+            
+        if not teacher.is_teacher:
+            return False, "Selected user is not a teacher"
+            
+        # Get all students in the class
+        students = User.query.filter_by(class_id=class_id, is_teacher=False).all()
+        
+        success_count = 0
+        for student in students:
+            # Check if relationship already exists
+            if not TeacherStudent.query.filter_by(teacher_id=teacher_id, student_id=student.id).first():
+                link = TeacherStudent(teacher_id=teacher_id, student_id=student.id)
+                db.session.add(link)
+                success_count += 1
+        
+        return True, f"Added {success_count} students to teacher"
+    
+    def unlink_teacher_student(self, teacher_id, student_id):
+        """Remove a relationship between teacher and student (superuser only)"""
+        if not self.is_superuser:
+            return False
+            
+        link = TeacherStudent.query.filter_by(teacher_id=teacher_id, student_id=student_id).first()
+        if link:
+            db.session.delete(link)
+            return True
+        return False
+    
+    def promote_to_teacher(self, user_id):
+        """Promote a user to teacher role (superuser only)"""
+        if not self.is_superuser:
+            return False
+            
+        user = User.query.get(user_id)
+        if user:
+            user.is_teacher = True
+            return True
+        return False
+    
+    def demote_from_teacher(self, user_id):
+        """Demote a teacher to regular user (superuser only)"""
+        if not self.is_superuser:
+            return False
+            
+        user = User.query.get(user_id)
+        if user and user.is_teacher and not user.is_superuser:  # Cannot demote superusers
+            user.is_teacher = False
+            return True
+        return False
+    
+    def get_all_users(self):
+        """Get all users in the system (superuser only)"""
+        if not self.is_superuser:
+            return []
+            
+        return User.query.all()
+    
+    def get_all_teachers(self):
+        """Get all teachers in the system (superuser only)"""
+        if not self.is_superuser:
+            return []
+            
+        return User.query.filter_by(is_teacher=True).all()
 
     def __repr__(self):
         return f'<User {self.username}>'
 
 
+
+
 @login_manager.user_loader
 def load_user(id):
     return User.query.get(int(id))
+
+
+# Create superuser command function (to be used in a CLI command)
+def create_superuser(username, email, password):
+    """
+    Create a new superuser account
+    This function should be called from a Flask CLI command
+    """
+    user = User.query.filter_by(username=username).first()
+    if user:
+        return False, "Username already exists"
+        
+    user = User.query.filter_by(email=email).first()
+    if user:
+        return False, "Email already exists"
+    
+    superuser = User(
+        username=username,
+        email=email,
+        is_teacher=True,  # Superuser is also a teacher
+        is_superuser=True
+    )
+    superuser.set_password(password)
+    
+    db.session.add(superuser)
+    db.session.commit()
+    
+    return True, f"Superuser {username} created successfully"
 
 
 class Course(db.Model):

@@ -50,6 +50,7 @@ def create_app(config_name=None):
     from app.routes.quiz import quiz_bp
     from app.routes.notes import notes
     from app.routes.insights_routes import insights_bp  
+    from app.routes.superuser import superuser  
 
     app.register_blueprint(insights_bp, url_prefix='/insights')  
     app.register_blueprint(quiz_bp)
@@ -57,8 +58,12 @@ def create_app(config_name=None):
     app.register_blueprint(courses_bp)
     app.register_blueprint(chapters_bp)
     app.register_blueprint(ai_bp)
+    app.register_blueprint(superuser)
     app.register_blueprint(notes, url_prefix='/notes')
-    
+    from app.cli import register_cli_commands
+    register_cli_commands(app)
+
+
     return app
 
 def register_template_filters(app):

@@ -273,7 +273,7 @@ def generate_full_chapter_summary(chapter_id):
                 return chapter.summary
         
         # Get API key from config
-        api_key = current_app.config.get('GROQ_API_KEY')
+        api_key = current_user.groq_api_key if current_user else None
         if not api_key:
             raise ValueError("Groq API key is not configured")
         
